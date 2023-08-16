@@ -1,5 +1,6 @@
 import requests
 from Classes import DBManager
+import psycopg2
 
 db_params = {
     "host": 'localhost',
@@ -72,3 +73,23 @@ def interact():
                 print(f"{company_name} - {vacancy_name} - {salary} - {vacancy_link}")
         else:
             print('Данного слова нет среди доступных вакансий')
+
+
+def create_vacancies_table(db_params):
+    conn = psycopg2.connect(**db_params)
+    cursor = conn.cursor()
+
+    create_table_query = """
+    CREATE TABLE vacancies (
+        id SERIAL PRIMARY KEY,
+        company_name VARCHAR,
+        vacancy_name VARCHAR,
+        salary INTEGER,
+        vacancy_link VARCHAR
+    );
+    """
+    cursor.execute(create_table_query)
+    conn.commit()
+
+    cursor.close()
+    conn.close()
