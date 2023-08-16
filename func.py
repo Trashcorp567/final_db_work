@@ -81,11 +81,11 @@ def create_vacancies_table(db_params):
 
     create_table_query = """
     CREATE TABLE vacancies (
-        id SERIAL PRIMARY KEY,
-        company_name VARCHAR,
-        vacancy_name VARCHAR,
-        salary INTEGER,
-        vacancy_link VARCHAR
+    id SERIAL PRIMARY KEY,
+    company_name VARCHAR,
+    vacancy_name VARCHAR,
+    salary INTEGER,
+    vacancy_link VARCHAR
     );
     """
     cursor.execute(create_table_query)
