@@ -46,6 +46,7 @@ conn = psycopg2.connect(**db_params)
 conn.autocommit = True
 cur = conn.cursor()
 
+# Закрытие соединения
 cur.close()
 conn.close()
 
