@@ -1,17 +1,34 @@
 import requests
 from Classes import DBManager
 import psycopg2
+import configparser
 
+# Создание объекта для работы с конфигурацией
+config = configparser.ConfigParser()
+
+# Чтение значений из файла config.ini
+config.read('config.ini')
+
+# Получение значений
+DB_HOST = config['database']['host']
+DB_NAME = config['database']['database']
+DB_USER = config['database']['user']
+DB_PASSWORD = config['database']['password']
+
+# Переменные для подключений к БД
 db_params = {
-    "host": 'localhost',
-    "database": 'vacancies_kr',
-    "user": 'postgres',
-    "password": 'jj15mnbl'
+    "host": DB_HOST,
+    "database": DB_NAME,
+    "user": DB_USER,
+    "password": DB_PASSWORD
 }
 
 
 def fetch_hh_vacancies():
-    'Получение данных с hh по API'
+    '''
+    Получение данных с hh по API
+    Только Москва, только с мин.зп
+    '''
     api_url = "https://api.hh.ru/vacancies"
     params = {
         "per_page": 10,
@@ -25,7 +42,9 @@ def fetch_hh_vacancies():
 
 
 def fetch_sq_db():
-    'Сортирует данные для работы с БД'
+    '''
+    Сортирует данные для работы с БД
+    '''
     db_manager = DBManager(db_params)
     vacancies = fetch_hh_vacancies()
 
@@ -44,7 +63,10 @@ def fetch_sq_db():
 
 
 def interact():
-    'Функция для проверки работы функциона'
+    '''
+    Функция для проверки работы функциона
+    '''
+    create_vacancies_table(db_params)
     db_func = DBManager(db_params)
     user = int(input('1 - получает список всех компаний и количество вакансий у каждой компании.\n'
                      '2 - получает список всех вакансий с указанием названия компании, названия вакансии и зарплаты и ссылки на вакансию\n'
@@ -76,20 +98,36 @@ def interact():
 
 
 def create_vacancies_table(db_params):
+    '''
+    Создаёт таблицу в БД, если таблица существет, ловит ошибку
+    '''
     conn = psycopg2.connect(**db_params)
     cursor = conn.cursor()
 
-    create_table_query = """
-    CREATE TABLE vacancies (
-    id SERIAL PRIMARY KEY,
-    company_name VARCHAR,
-    vacancy_name VARCHAR,
-    salary INTEGER,
-    vacancy_link VARCHAR
-    );
+    table_exists_query = """
+    SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_name = 'vacancies'
+    )
     """
-    cursor.execute(create_table_query)
-    conn.commit()
+    cursor.execute(table_exists_query)
+    table_exists = cursor.fetchone()[0]
+
+    if not table_exists:
+        create_table_query = """
+        CREATE TABLE vacancies (
+        id SERIAL PRIMARY KEY,
+        company_name VARCHAR,
+        vacancy_name VARCHAR,
+        salary INTEGER,
+        vacancy_link VARCHAR
+        );
+        """
+        cursor.execute(create_table_query)
+        conn.commit()
+    else:
+        print("")
 
     cursor.close()
     conn.close()
