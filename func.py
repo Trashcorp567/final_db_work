@@ -2,6 +2,7 @@ import requests
 from Classes import DBManager
 import psycopg2
 import configparser
+from psycopg2 import sql
 
 # Создание объекта для работы с конфигурацией
 config = configparser.ConfigParser()
@@ -18,10 +19,37 @@ DB_PASSWORD = config['database']['password']
 # Переменные для подключений к БД
 db_params = {
     "host": DB_HOST,
-    "database": DB_NAME,
     "user": DB_USER,
     "password": DB_PASSWORD
 }
+# Имя базы данных
+db_name = "vacancies_kr"
+
+# Подключение к PostgreSQL без указания базы данных
+conn = psycopg2.connect(**db_params)
+conn.autocommit = True
+cur = conn.cursor()
+
+# Проверка существования базы данных
+check_db_query = sql.SQL("SELECT datname FROM pg_catalog.pg_database WHERE datname = %s")
+cur.execute(check_db_query, (db_name,))
+exists = cur.fetchone()
+
+# Если база данных существует, ничего не делаем, если нет, создаём
+if not exists:
+    # Создаём базу данных
+    cur.execute(f"CREATE DATABASE {db_name}")
+
+# Подключение к созданной базе данных
+db_params["database"] = db_name
+conn = psycopg2.connect(**db_params)
+conn.autocommit = True
+cur = conn.cursor()
+
+# Здесь можно продолжить остальную часть кода
+
+cur.close()
+conn.close()
 
 
 def fetch_hh_vacancies():
